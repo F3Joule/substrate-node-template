@@ -24,6 +24,9 @@ std = [
     'sudo/std',
     'system/std',
     'timestamp/std',
+    'node-primitives/std',
+    'pallet-indices/std',
+    'pallet-multisig/std',
     'transaction-payment/std',
     'pallet-permissions/std',
     'pallet-posts/std',
@@ -40,6 +43,7 @@ std = [
     'pallet-space-history/std',
     'pallet-utils/std',
 ]
+
 [dependencies.aura]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
@@ -191,70 +195,95 @@ package = 'pallet-transaction-payment'
 tag = 'v2.0.0-rc4'
 version = '2.0.0-rc4'
 
+[dependencies.transaction-payment-rpc-runtime-api]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+package = 'pallet-transaction-payment-rpc-runtime-api'
+tag = 'v2.0.0-rc4'
+version = '2.0.0-rc4'
+
+[dependencies.node-primitives]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc4'
+version = '2.0.0-rc4'
+
+[dependencies.pallet-indices]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc4'
+version = '2.0.0-rc4'
+
+[dependencies.pallet-multisig]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc4'
+version = '2.0.0-rc4'
+
 [dependencies.pallet-permissions]
- default-features = false
- path = '../pallets/permissions'
- version = '2.0.0-rc4'
+default-features = false
+path = '../pallets/permissions'
+version = '2.0.0-rc4'
 
- [dependencies.pallet-posts]
- default-features = false
- path = '../pallets/posts'
- version = '2.0.0-rc4'
+[dependencies.pallet-posts]
+default-features = false
+path = '../pallets/posts'
+version = '2.0.0-rc4'
 
- [dependencies.pallet-post-history]
- default-features = false
- path = '../pallets/post-history'
- version = '2.0.0-rc4'
+[dependencies.pallet-post-history]
+default-features = false
+path = '../pallets/post-history'
+version = '2.0.0-rc4'
 
- [dependencies.pallet-profiles]
- default-features = false
- path = '../pallets/profiles'
- version = '2.0.0-rc4'
+[dependencies.pallet-profiles]
+default-features = false
+path = '../pallets/profiles'
+version = '2.0.0-rc4'
 
- [dependencies.pallet-profile-follows]
- default-features = false
- path = '../pallets/profile-follows'
- version = '2.0.0-rc4'
+[dependencies.pallet-profile-follows]
+default-features = false
+path = '../pallets/profile-follows'
+version = '2.0.0-rc4'
 
- [dependencies.pallet-profile-history]
- default-features = false
- path = '../pallets/profile-history'
- version = '2.0.0-rc4'
+[dependencies.pallet-profile-history]
+default-features = false
+path = '../pallets/profile-history'
+version = '2.0.0-rc4'
 
- [dependencies.pallet-reactions]
- default-features = false
- path = '../pallets/reactions'
- version = '2.0.0-rc4'
+[dependencies.pallet-reactions]
+default-features = false
+path = '../pallets/reactions'
+version = '2.0.0-rc4'
 
- [dependencies.pallet-roles]
- default-features = false
- path = '../pallets/roles'
- version = '2.0.0-rc4'
+[dependencies.pallet-roles]
+default-features = false
+path = '../pallets/roles'
+version = '2.0.0-rc4'
 
- [dependencies.pallet-scores]
- default-features = false
- path = '../pallets/scores'
- version = '2.0.0-rc4'
+[dependencies.pallet-scores]
+default-features = false
+path = '../pallets/scores'
+version = '2.0.0-rc4'
 
- [dependencies.pallet-spaces]
- default-features = false
- path = '../pallets/spaces'
- version = '2.0.0-rc4'
+[dependencies.pallet-spaces]
+default-features = false
+path = '../pallets/spaces'
+version = '2.0.0-rc4'
 
- [dependencies.pallet-space-follows]
- default-features = false
- path = '../pallets/space-follows'
- version = '2.0.0-rc4'
+[dependencies.pallet-space-follows]
+default-features = false
+path = '../pallets/space-follows'
+version = '2.0.0-rc4'
 
- [dependencies.pallet-space-ownership]
- default-features = false
- path = '../pallets/space-ownership'
- version = '2.0.0-rc4'
+[dependencies.pallet-space-ownership]
+default-features = false
+path = '../pallets/space-ownership'
+version = '2.0.0-rc4'
 
- [dependencies.pallet-space-history]
- default-features = false
- path = '../pallets/space-history'
- version = '2.0.0-rc4'
+[dependencies.pallet-space-history]
+default-features = false
+path = '../pallets/space-history'
+version = '2.0.0-rc4'
 
 [dependencies.pallet-utils]
 default-features = false
