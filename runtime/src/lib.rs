@@ -13,18 +13,25 @@ use sp_std::{
 	iter::FromIterator
 };
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+
+use codec::Encode;
+
 use sp_runtime::{
 	ApplyExtrinsicResult, generic, create_runtime_str, impl_opaque_keys, MultiSignature,
 	transaction_validity::{TransactionValidity, TransactionSource}, Perquintill, FixedPointNumber,
+	traits
 };
 use sp_runtime::traits::{
-	BlakeTwo256, Block as BlockT, IdentityLookup, Verify, IdentifyAccount, NumberFor, Saturating,
+	BlakeTwo256, Block as BlockT, Verify, IdentifyAccount, NumberFor, StaticLookup,
+	Saturating, SaturatedConversion
 };
+
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 use grandpa::fg_primitives;
 use sp_version::RuntimeVersion;
+
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 
@@ -35,7 +42,7 @@ pub use timestamp::Call as TimestampCall;
 pub use balances::Call as BalancesCall;
 pub use sp_runtime::{Permill, Perbill};
 pub use frame_support::{
-	construct_runtime, parameter_types, StorageValue,
+	construct_runtime, parameter_types, StorageValue, debug,
 	traits::{KeyOwnerProofSystem, Randomness},
 	weights::{
 		Weight, IdentityFee,
@@ -163,7 +170,7 @@ impl system::Trait for Runtime {
 	/// The aggregated dispatch type that is available for extrinsics.
 	type Call = Call;
 	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
-	type Lookup = IdentityLookup<AccountId>;
+	type Lookup = Indices;
 	/// The index type for storing how many extrinsics an account has signed.
 	type Index = Index;
 	/// The index type for blocks.
@@ -275,6 +282,59 @@ impl transaction_payment::Trait for Runtime {
 impl sudo::Trait for Runtime {
 	type Event = Event;
 	type Call = Call;
+}
+
+impl<LocalCall> system::offchain::CreateSignedTransaction<LocalCall> for Runtime where
+	Call: From<LocalCall>,
+{
+	fn create_transaction<C: system::offchain::AppCrypto<Self::Public, Self::Signature>>(
+		call: Call,
+		public: <Signature as traits::Verify>::Signer,
+		account: AccountId,
+		nonce: Index,
+	) -> Option<(Call, <UncheckedExtrinsic as traits::Extrinsic>::SignaturePayload)> {
+		// take the biggest period possible.
+		let period = BlockHashCount::get()
+			.checked_next_power_of_two()
+			.map(|c| c / 2)
+			.unwrap_or(2) as u64;
+		let current_block = System::block_number()
+			.saturated_into::<u64>()
+			// The `System::block_number` is initialized with `n+1`,
+			// so the actual block number is `n`.
+			.saturating_sub(1);
+		let tip = 0;
+		let extra: SignedExtra = (
+			system::CheckSpecVersion::<Runtime>::new(),
+			system::CheckTxVersion::<Runtime>::new(),
+			system::CheckGenesis::<Runtime>::new(),
+			system::CheckEra::<Runtime>::from(generic::Era::mortal(period, current_block)),
+			system::CheckNonce::<Runtime>::from(nonce),
+			system::CheckWeight::<Runtime>::new(),
+			transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+		);
+		let raw_payload = SignedPayload::new(call, extra).map_err(|e| {
+			debug::warn!("Unable to create signed payload: {:?}", e);
+		}).ok()?;
+		let signature = raw_payload.using_encoded(|payload| {
+			C::sign(payload, public)
+		})?;
+		let address = Indices::unlookup(account);
+		let (call, extra, _) = raw_payload.deconstruct();
+		Some((call, (address, signature.into(), extra)))
+	}
+}
+
+impl system::offchain::SigningTypes for Runtime {
+	type Public = <Signature as traits::Verify>::Signer;
+	type Signature = Signature;
+}
+
+impl<C> system::offchain::SendTransactionTypes<C> for Runtime where
+	Call: From<C>,
+{
+	type Extrinsic = UncheckedExtrinsic;
+	type OverarchingCall = Call;
 }
 
 parameter_types! {
@@ -496,6 +556,26 @@ parameter_types! {}
 
 impl pallet_space_history::Trait for Runtime {}
 
+parameter_types! {
+	pub KusamaRpcAddress: Vec<u8> = b"kusama-rpc.polkadot.io".to_vec();
+	pub PolkadotRpcAddress: Vec<u8> = b"rpc.polkadot.io".to_vec();
+
+	pub const GracePeriod: BlockNumber = 1;
+	pub const UnsignedInterval: BlockNumber = 1;
+}
+
+impl council_space::Trait<council_space::Instance1> for Runtime {
+    type Event = Event;
+    type Call = Call;
+    type NetworkRpcAddress = KusamaRpcAddress;
+}
+
+impl council_space::Trait<council_space::Instance2> for Runtime {
+    type Event = Event;
+    type Call = Call;
+    type NetworkRpcAddress = PolkadotRpcAddress;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -527,11 +607,13 @@ construct_runtime!(
 		SpaceHistory: pallet_space_history::{Module, Storage},
 		SpaceOwnership: pallet_space_ownership::{Module, Call, Storage, Event<T>},
 		Spaces: pallet_spaces::{Module, Call, Storage, Event<T>},
+		KusamaCouncilSpace: council_space::<Instance1>::{Module, Call, Storage, Event<T>},
+		PolkadotCouncilSpace: council_space::<Instance2>::{Module, Call, Storage, Event<T>},
 	}
 );
 
 /// The address format for describing accounts.
-pub type Address = AccountId;
+pub type Address = <Indices as StaticLookup>::Source;
 /// Block header type as expected by this runtime.
 pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type as expected by this runtime.
@@ -552,6 +634,8 @@ pub type SignedExtra = (
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+/// The payload being signed in transactions.
+pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 /// Extrinsic type that has already been checked.
 pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Call, SignedExtra>;
 /// Executive: handles dispatch to the various modules.

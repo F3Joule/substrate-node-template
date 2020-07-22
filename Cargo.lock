@@ -3143,6 +3143,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-council-space"
+version = "2.0.0-rc4"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "impl-trait-for-tuples",
+ "pallet-multisig",
+ "pallet-utils",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-finality-tracker"
 version = "2.0.0-rc4"
 source = "git+https://github.com/paritytech/substrate.git?tag=v2.0.0-rc4#00768a1f21a579c478fe5d4f51e1fa71f7db9fd4"
@@ -6251,6 +6266,7 @@ dependencies = [
  "node-primitives",
  "pallet-aura",
  "pallet-balances",
+ "pallet-council-space",
  "pallet-grandpa",
  "pallet-indices",
  "pallet-multisig",

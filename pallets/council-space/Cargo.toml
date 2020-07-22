@@ -18,9 +18,9 @@ std = [
     'frame-support/std',
     'frame-system/std',
     'sp-std/std',
-    'pallet-spaces/std',
+    'sp-core/std',
     'pallet-utils/std',
-    'df-traits/std',
+    'pallet-multisig/std',
 ]
 
 [dependencies.impl-trait-for-tuples]
@@ -56,14 +56,16 @@ git = 'https://github.com/paritytech/substrate.git'
 tag = 'v2.0.0-rc4'
 version = '2.0.0-rc4'
 
-[dependencies.df-traits]
+[dependencies.sp-core]
 default-features = false
-path = '../traits'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc4'
 version = '2.0.0-rc4'
 
-[dependencies.pallet-spaces]
+[dependencies.pallet-multisig]
 default-features = false
-path = '../spaces'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc4'
 version = '2.0.0-rc4'
 
 [dependencies.pallet-utils]
