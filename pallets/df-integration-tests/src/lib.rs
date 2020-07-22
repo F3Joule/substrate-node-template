@@ -429,8 +429,8 @@ mod tests {
         b"space_handle".to_vec()
     }
 
-    fn space_content_ipfs() -> Content {
-        Content::IPFS( b"QmRAQB6YaCyidP37UdDnjFY5vQuiBrcqdyoW1CuDgwxkD4".to_vec())
+    fn content_ipfs() -> Content {
+        Content::IPFS(b"QmRnPCevh2p89B8XzwFHVouZtLLZRcnUB7SoMtRscaTLon".to_vec())
     }
 
     fn space_update(
@@ -449,10 +449,6 @@ mod tests {
         }
     }
 
-    fn post_content_ipfs() -> Content {
-        Content::IPFS(b"QmRAQB6YaCyidP37UdDnjFY5vQuiBrcqdyoW2CuDgwxkD4".to_vec())
-    }
-
     fn post_update(
         space_id: Option<SpaceId>,
         content: Option<Content>,
@@ -463,18 +459,6 @@ mod tests {
             content,
             hidden,
         }
-    }
-
-    fn comment_content_ipfs() -> Content {
-        Content::IPFS(b"QmRAQB6YaCyidP37UdDnjFY5vQuiBrcqdyoW1CuDgwxkD4".to_vec())
-    }
-
-    fn reply_content_ipfs() -> Content {
-        Content::IPFS(b"QmYA2fn8cMbVWo4v95RwcwJVyQsNtnEwHerfWR8UNtEwoE".to_vec())
-    }
-
-    fn profile_content_ipfs() -> Content {
-        Content::IPFS( b"QmRAQB6YaCyidP37UdDnjFY5vQuiaRtqdyoW2CuDgwxkA5".to_vec())
     }
 
     fn alice_handle() -> Vec<u8> {
@@ -555,7 +539,7 @@ mod tests {
             origin.unwrap_or_else(|| Origin::signed(ACCOUNT1)),
             parent_id_opt.unwrap_or(None),
             handle.unwrap_or_else(|| Some(self::space_handle())),
-            content.unwrap_or_else(self::space_content_ipfs),
+            content.unwrap_or_else(self::content_ipfs),
         )
     }
 
@@ -607,7 +591,7 @@ mod tests {
             origin.unwrap_or_else(|| Origin::signed(ACCOUNT1)),
             space_id_opt.unwrap_or(Some(SPACE1)),
             extension.unwrap_or_else(self::extension_regular_post),
-            content.unwrap_or_else(self::post_content_ipfs),
+            content.unwrap_or_else(self::content_ipfs),
         )
     }
 
@@ -640,7 +624,7 @@ mod tests {
                 parent_id.unwrap_or(None),
                 post_id.unwrap_or(POST1)
             )),
-            Some(content.unwrap_or_else(self::comment_content_ipfs)),
+            Some(content.unwrap_or_else(self::content_ipfs)),
         )
     }
 
@@ -653,7 +637,7 @@ mod tests {
             origin,
             Some(post_id.unwrap_or(POST2)),
             Some(update.unwrap_or_else(||
-                self::post_update(None, Some(self::reply_content_ipfs()), None))
+                self::post_update(None, Some(self::content_ipfs()), None))
             ),
         )
     }
@@ -741,7 +725,7 @@ mod tests {
         Profiles::create_profile(
             origin.unwrap_or_else(|| Origin::signed(ACCOUNT1)),
             handle.unwrap_or_else(self::alice_handle),
-            content.unwrap_or_else(self::profile_content_ipfs),
+            content.unwrap_or_else(self::content_ipfs),
         )
     }
 
@@ -934,7 +918,7 @@ mod tests {
 
             assert_eq!(space.owner, ACCOUNT1);
             assert_eq!(space.handle, Some(self::space_handle()));
-            assert_eq!(space.content, self::space_content_ipfs());
+            assert_eq!(space.content, self::content_ipfs());
 
             assert_eq!(space.posts_count, 0);
             assert_eq!(space.followers_count, 1);
@@ -1103,7 +1087,7 @@ mod tests {
             // Check whether history recorded correctly
             let edit_history = &SpaceHistory::edit_history(space.id)[0];
             assert_eq!(edit_history.old_data.handle, Some(Some(self::space_handle())));
-            assert_eq!(edit_history.old_data.content, Some(self::space_content_ipfs()));
+            assert_eq!(edit_history.old_data.content, Some(self::content_ipfs()));
             assert_eq!(edit_history.old_data.hidden, Some(false));
         });
     }
@@ -1403,7 +1387,7 @@ mod tests {
             assert_eq!(post.space_id, Some(SPACE1));
             assert_eq!(post.extension, self::extension_regular_post());
 
-            assert_eq!(post.content, self::post_content_ipfs());
+            assert_eq!(post.content, self::content_ipfs());
 
             assert_eq!(post.replies_count, 0);
             assert_eq!(post.hidden_replies_count, 0);
@@ -1516,7 +1500,7 @@ mod tests {
             // Check whether history recorded correctly
             let post_history = PostHistory::edit_history(POST1)[0].clone();
             assert!(post_history.old_data.space_id.is_none());
-            assert_eq!(post_history.old_data.content, Some(self::post_content_ipfs()));
+            assert_eq!(post_history.old_data.content, Some(self::content_ipfs()));
             assert_eq!(post_history.old_data.hidden, Some(false));
         });
     }
@@ -1699,7 +1683,7 @@ mod tests {
             assert_eq!(comment_ext.root_post_id, POST1);
             assert_eq!(comment.created.account, ACCOUNT1);
             assert!(comment.updated.is_none());
-            assert_eq!(comment.content, self::comment_content_ipfs());
+            assert_eq!(comment.content, self::content_ipfs());
             assert_eq!(comment.replies_count, 0);
             assert_eq!(comment.hidden_replies_count, 0);
             assert_eq!(comment.shares_count, 0);
@@ -1829,10 +1813,10 @@ mod tests {
 
             // Check whether post updates correctly
             let comment = Posts::post_by_id(POST2).unwrap();
-            assert_eq!(comment.content, self::reply_content_ipfs());
+            assert_eq!(comment.content, self::content_ipfs());
 
             // Check whether history recorded correctly
-            assert_eq!(PostHistory::edit_history(POST2)[0].old_data.content, Some(self::comment_content_ipfs()));
+            assert_eq!(PostHistory::edit_history(POST2)[0].old_data.content, Some(self::content_ipfs()));
         });
     }
 
@@ -2696,7 +2680,7 @@ mod tests {
             assert_eq!(profile.created.account, ACCOUNT1);
             assert!(profile.updated.is_none());
             assert_eq!(profile.handle, self::alice_handle());
-            assert_eq!(profile.content, self::profile_content_ipfs());
+            assert_eq!(profile.content, self::content_ipfs());
             assert_eq!(Profiles::account_by_profile_handle(self::alice_handle()), Some(ACCOUNT1));
 
             assert!(ProfileHistory::edit_history(ACCOUNT1).is_empty());
@@ -2791,14 +2775,14 @@ mod tests {
             assert_ok!(_update_profile(
                 None,
                 Some(self::bob_handle()),
-                Some(self::space_content_ipfs())
+                Some(self::content_ipfs())
             ));
 
             // Check whether profile updated correctly
             let profile = Profiles::social_account_by_id(ACCOUNT1).unwrap().profile.unwrap();
             assert!(profile.updated.is_some());
             assert_eq!(profile.handle, self::bob_handle());
-            assert_eq!(profile.content, self::space_content_ipfs());
+            assert_eq!(profile.content, self::content_ipfs());
 
             // Check storages
             assert!(Profiles::account_by_profile_handle(self::alice_handle()).is_none());
@@ -2807,7 +2791,7 @@ mod tests {
             // Check whether profile history is written correctly
             let profile_history = ProfileHistory::edit_history(ACCOUNT1)[0].clone();
             assert_eq!(profile_history.old_data.handle, Some(self::alice_handle()));
-            assert_eq!(profile_history.old_data.content, Some(self::profile_content_ipfs()));
+            assert_eq!(profile_history.old_data.content, Some(self::content_ipfs()));
         });
     }
 

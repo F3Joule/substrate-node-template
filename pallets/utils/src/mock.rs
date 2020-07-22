@@ -1,4 +1,4 @@
-use crate::{Module, Trait, User};
+use crate::{Module, Trait, User, Content};
 
 use sp_core::H256;
 use sp_std::collections::btree_set::BTreeSet;
@@ -7,7 +7,11 @@ use sp_io::TestExternalities;
 use sp_runtime::{
     traits::{BlakeTwo256, IdentityLookup}, testing::Header, Perbill,
 };
-use frame_support::{impl_outer_origin, parameter_types, weights::Weight, dispatch::DispatchError};
+use frame_support::{
+    impl_outer_origin, parameter_types, 
+    weights::Weight, 
+    dispatch::{DispatchError, DispatchResult},
+};
 use frame_system as system;
 
 impl_outer_origin! {
@@ -103,4 +107,8 @@ pub(crate) fn _convert_users_vec_to_btree_set(
     users_vec: Vec<User<AccountId>>
 ) -> Result<UsersSet, DispatchError> {
     Utils::convert_users_vec_to_btree_set(users_vec)
+}
+
+pub(crate) fn _is_valid_content(content: Content) -> DispatchResult {
+    Utils::is_valid_content(content)
 }

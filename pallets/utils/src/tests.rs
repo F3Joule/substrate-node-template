@@ -1,6 +1,11 @@
-use crate::{mock::*, vec_remove_on, log_2};
+use crate::{
+    mock::*, Error,
+    vec_remove_on, log_2,
+    Content,
+};
 
 use sp_std::iter::FromIterator;
+use frame_support::{assert_ok, assert_noop};
 
 #[test]
 fn log_2_should_work() {
@@ -89,5 +94,43 @@ fn convert_users_vec_to_btree_set_should_work() {
             _convert_users_vec_to_btree_set(vec![USER3, USER1, USER3, USER2, USER1]).ok().unwrap(),
             UsersSet::from_iter(vec![USER1, USER2, USER3].into_iter())
         );
+    });
+}
+
+use cid::{Cid, Codec, Version};
+use multihash::Sha2_256;
+
+#[test]
+fn is_valid_content_should_work_with_ipfs_cid_v0() {
+    ExtBuilder::build().execute_with(|| {
+        let valid_cid_v0 = Cid::new(
+            Version::V0,
+            Codec::DagProtobuf,
+            Sha2_256::digest(b"valid cid of version 0")
+        ).unwrap().to_bytes();
+
+        assert_ok!(_is_valid_content(Content::IPFS(valid_cid_v0)));
+    });
+}
+
+#[test]
+fn is_valid_content_should_work_with_ipfs_cid_v1() {
+    ExtBuilder::build().execute_with(|| {
+        let valid_cid_v1 = Cid::new(
+            Version::V1,
+            Codec::DagProtobuf,
+            Sha2_256::digest(b"valid cid of version 1")
+        ).unwrap().to_bytes();
+
+        assert_ok!(_is_valid_content(Content::IPFS(valid_cid_v1)));
+    });
+}
+
+#[test]
+fn is_valid_content_should_fail_with_invalid_ipfs_cid() {
+    ExtBuilder::build().execute_with(|| {
+        let invalid_cid = b"QmYHzA8euDgUpNy3fht6jCgF35YTutYkyGGyr8f".to_vec();
+
+        assert_noop!(_is_valid_content(Content::IPFS(invalid_cid)), Error::<Test>::InvalidIpfsCid);
     });
 }

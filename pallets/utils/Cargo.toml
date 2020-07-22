@@ -18,8 +18,12 @@ std = [
     'frame-support/std',
     'frame-system/std',
     'sp-std/std',
-    'pallet-timestamp/std'
+    'pallet-timestamp/std',
 ]
+
+[dependencies]
+cid = '0.5.1'
+multihash = '^0.11.2'
 
 [dependencies.codec]
 default-features = false

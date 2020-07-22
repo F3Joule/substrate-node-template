@@ -8,9 +8,10 @@ use frame_support::{
 use sp_runtime::RuntimeDebug;
 use sp_std::{
     collections::btree_set::BTreeSet,
-    prelude::*,
+    prelude::*, convert::TryFrom,
 };
 use frame_system::{self as system};
+use cid::Cid;
 
 #[cfg(test)]
 mod mock;
@@ -111,7 +112,6 @@ pub fn log_2(x: u32) -> Option<u32> {
 
 pub fn vec_remove_on<F: PartialEq>(vector: &mut Vec<F>, element: F) {
     if let Some(index) = vector.iter().position(|x| *x == element) {
-        // TODO fix: swap_remove doesn't remove tha last element.
         vector.swap_remove(index);
     }
 }
@@ -125,7 +125,7 @@ impl<T: Trait> Module<T> {
             Content::IPFS(ipfs_cid) => {
                 // TODO write tests for IPFS CID v0 and v1.
 
-                ensure!(ipfs_cid.len() == T::IpfsCidLen::get() as usize, Error::<T>::InvalidIpfsCid);
+                ensure!(Cid::try_from(ipfs_cid).ok().is_some(), Error::<T>::InvalidIpfsCid);
                 Ok(())
             },
             Content::Hyper(_) => Err(Error::<T>::HypercoreContentTypeNotSupported.into())
