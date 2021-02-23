@@ -1,6 +1,6 @@
 [package]
 name = 'df-traits'
-version = '0.5.0'
+version = '0.6.0'
 authors = ['DappForce <dappforce@pm.me>']
 edition = '2018'
 license = 'GPL-3.0-only'
@@ -22,14 +22,14 @@ std = [
 [dependencies.sp-runtime]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+tag = 'v2.0.1'
+version = '2.0.1'
 
 [dependencies.frame-support]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+tag = 'v2.0.1'
+version = '2.0.1'
 
 [dependencies.pallet-permissions]
 default-features = false

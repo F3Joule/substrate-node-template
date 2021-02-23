@@ -1,6 +1,6 @@
 [package]
 name = 'subsocial-node'
-version = '0.5.0'
+version = '0.6.0'
 build = 'build.rs'
 authors = ['DappForce <dappforce@pm.me>']
 edition = '2018'
@@ -28,97 +28,97 @@ path = '../runtime'
 
 [dependencies.sc-basic-authorship]
 git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '0.8.0-rc4'
+tag = 'v2.0.1'
+version = '0.8.0'
 
 [dependencies.sc-cli]
 features = ['wasmtime']
 git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '0.8.0-rc4'
+tag = 'v2.0.1'
+version = '0.8.0'
 
 [dependencies.sc-client-api]
 git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+tag = 'v2.0.1'
+version = '2.0.1'
 
 [dependencies.sc-consensus]
 git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '0.8.0-rc4'
+tag = 'v2.0.1'
+version = '0.8.0'
 
 [dependencies.sc-consensus-aura]
 git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '0.8.0-rc4'
+tag = 'v2.0.1'
+version = '0.8.0'
 
 [dependencies.sc-executor]
 features = ['wasmtime']
 git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '0.8.0-rc4'
+tag = 'v2.0.1'
+version = '0.8.0'
 
 [dependencies.sc-finality-grandpa]
 git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '0.8.0-rc4'
+tag = 'v2.0.1'
+version = '0.8.0'
 
 [dependencies.sc-network]
 git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '0.8.0-rc4'
+tag = 'v2.0.1'
+version = '0.8.0'
 
 [dependencies.sc-service]
 features = ['wasmtime']
 git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '0.8.0-rc4'
+tag = 'v2.0.1'
+version = '0.8.0'
 
 [dependencies.sc-transaction-pool]
 git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+tag = 'v2.0.1'
+version = '2.0.1'
 
 [dependencies.sc-telemetry]
 git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+tag = 'v2.0.1'
+version = '2.0.1'
 
 [dependencies.sp-consensus]
 git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '0.8.0-rc4'
+tag = 'v2.0.1'
+version = '0.8.0'
 
 [dependencies.sp-consensus-aura]
 git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '0.8.0-rc4'
+tag = 'v2.0.1'
+version = '0.8.0'
 
 [dependencies.sp-core]
 git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+tag = 'v2.0.1'
+version = '2.0.1'
 
 [dependencies.sp-finality-grandpa]
 git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+tag = 'v2.0.1'
+version = '2.0.1'
 
 [dependencies.sp-inherents]
 git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+tag = 'v2.0.1'
+version = '2.0.1'
 
 [dependencies.sp-runtime]
 git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+tag = 'v2.0.1'
+version = '2.0.1'
 
 [dependencies.sp-transaction-pool]
 git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+tag = 'v2.0.1'
+version = '2.0.1'
 [build-dependencies.substrate-build-script-utils]
 git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+tag = 'v2.0.1'
+version = '2.0.1'
