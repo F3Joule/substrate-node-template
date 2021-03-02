@@ -230,7 +230,7 @@ decl_module! {
 
             ensure_root(origin)?;
 
-            ensure!(faucets.len() != Zero::zero(), Error::<T>::NoFaucetsProvided);
+            ensure!(!faucets.len().is_zero(), Error::<T>::NoFaucetsProvided);
 
             let unique_faucets = BTreeSet::from_iter(faucets.iter());
             for faucet in unique_faucets.iter() {

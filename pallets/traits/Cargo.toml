@@ -19,22 +19,11 @@ std = [
     'pallet-utils/std'
 ]
 
-[dependencies.sp-runtime]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.1'
-version = '2.0.1'
+[dependencies]
+# Local dependencies
+pallet-permissions = { default-features = false, path = '../permissions' }
+pallet-utils = { default-features = false, path = '../utils' }
 
-[dependencies.frame-support]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.1'
-version = '2.0.1'
-
-[dependencies.pallet-permissions]
-default-features = false
-path = '../permissions'
-
-[dependencies.pallet-utils]
-default-features = false
-path = '../utils'
+# Substrate dependencies
+frame-support = { default-features = false, version = '2.0.1' }
+sp-runtime = { default-features = false, version = '2.0.1' }

@@ -26,36 +26,16 @@ std = [
 default-features = false
 features = ['derive']
 package = 'parity-scale-codec'
-version = '1.3.1'
+version = '1.3.4'
 
-[dependencies.sp-runtime]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.1'
-version = '2.0.1'
+[dependencies]
+# Local dependencies
+pallet-spaces = { default-features = false, path = '../spaces' }
+pallet-utils = { default-features = false, path = '../utils' }
 
-[dependencies.frame-support]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.1'
-version = '2.0.1'
-
-[dependencies.frame-system]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.1'
-version = '2.0.1'
-
-[dependencies.sp-std]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.1'
-version = '2.0.1'
-
-[dependencies.pallet-spaces]
-default-features = false
-path = '../spaces'
-
-[dependencies.pallet-utils]
-default-features = false
-path = '../utils'
+# Substrate dependencies
+frame-support = { default-features = false, version = '2.0.1' }
+frame-system = { default-features = false, version = '2.0.1' }
+sp-io = { default-features = false, version = '2.0.1' }
+sp-runtime = { default-features = false, version = '2.0.1' }
+sp-std = { default-features = false, version = '2.0.1' }
