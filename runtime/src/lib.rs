@@ -15,7 +15,7 @@ use sp_runtime::{
     transaction_validity::{TransactionValidity, TransactionSource},
 };
 use sp_runtime::traits::{
-    BlakeTwo256, Block as BlockT, Verify, IdentifyAccount, NumberFor, Saturating,
+    BlakeTwo256, Block as BlockT, Verify, IdentifyAccount, NumberFor, AccountIdLookup
 };
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -35,11 +35,16 @@ pub use frame_support::{
     construct_runtime, parameter_types, StorageValue,
     traits::{KeyOwnerProofSystem, Randomness, Currency, Imbalance, OnUnbalanced, Filter},
     weights::{
-        Weight, IdentityFee,
+        Weight, IdentityFee, DispatchClass,
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
     },
 };
-use frame_system::EnsureRoot;
+use frame_system::{
+    EnsureRoot,
+    limits::{BlockWeights, BlockLength}
+};
+use pallet_transaction_payment::CurrencyAdapter;
+use static_assertions::const_assert;
 
 pub mod constants;
 use constants::{currency::*, time::*};
@@ -130,21 +135,50 @@ impl OnUnbalanced<NegativeImbalance> for DealWithFees {
     }
 }
 
+/// We assume that ~10% of the block weight is consumed by `on_initalize` handlers.
+/// This is used to limit the maximal weight of a single extrinsic.
+const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
+/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used
+/// by  Operational  extrinsics.
+const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
+/// We allow for 2 seconds of compute with a 6 second average block time.
+const MAXIMUM_BLOCK_WEIGHT: Weight = 2 * WEIGHT_PER_SECOND;
+
 parameter_types! {
 	pub const BlockHashCount: BlockNumber = 2400;
-	/// We allow for 2 seconds of compute with a 6 second average block time.
-	pub const MaximumBlockWeight: Weight = 2 * WEIGHT_PER_SECOND;
-	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
-	/// Assume 10% of weight for average on_initialize calls.
-	pub MaximumExtrinsicWeight: Weight = AvailableBlockRatio::get()
-		.saturating_sub(Perbill::from_percent(10)) * MaximumBlockWeight::get();
-	pub const MaximumBlockLength: u32 = 5 * 1024 * 1024;
 	pub const Version: RuntimeVersion = VERSION;
+	pub RuntimeBlockLength: BlockLength =
+		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
+	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
+		.base_block(BlockExecutionWeight::get())
+		.for_class(DispatchClass::all(), |weights| {
+			weights.base_extrinsic = ExtrinsicBaseWeight::get();
+		})
+		.for_class(DispatchClass::Normal, |weights| {
+			weights.max_total = Some(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT);
+		})
+		.for_class(DispatchClass::Operational, |weights| {
+			weights.max_total = Some(MAXIMUM_BLOCK_WEIGHT);
+			// Operational transactions have some extra reserved space, so that they
+			// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
+			weights.reserved = Some(
+				MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT
+			);
+		})
+		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
+		.build_or_panic();
+	pub const SS58Prefix: u8 = 28;
 }
 
-impl frame_system::Trait for Runtime {
+const_assert!(NORMAL_DISPATCH_RATIO.deconstruct() >= AVERAGE_ON_INITIALIZE_RATIO.deconstruct());
+
+impl frame_system::Config for Runtime {
     /// The basic call filter to use in dispatchable.
     type BaseCallFilter = BaseFilter;
+    /// Block & extrinsics weights: base values and limits.
+    type BlockWeights = RuntimeBlockWeights;
+    /// The maximum length of a block (in bytes).
+    type BlockLength = RuntimeBlockLength;
     /// The ubiquitous origin type.
     type Origin = Origin;
     /// The aggregated dispatch type that is available for extrinsics.
@@ -160,31 +194,15 @@ impl frame_system::Trait for Runtime {
     /// The identifier used to distinguish between accounts.
     type AccountId = AccountId;
     /// The lookup mechanism to get account ID from whatever is passed in dispatchers.
-    type Lookup = multiaddress::AccountIdLookup<AccountId, ()>;
+    type Lookup = AccountIdLookup<AccountId, ()>;
     /// The header type.
     type Header = generic::Header<BlockNumber, BlakeTwo256>;
     /// The ubiquitous event type.
     type Event = Event;
     /// Maximum number of block number to block hash mappings to keep (oldest pruned first).
     type BlockHashCount = BlockHashCount;
-    /// Maximum weight of each block.
-    type MaximumBlockWeight = MaximumBlockWeight;
     /// The weight of database operations that the runtime can invoke.
     type DbWeight = RocksDbWeight;
-    /// The weight of the overhead invoked on the block import process, independent of the
-    /// extrinsics included in that block.
-    type BlockExecutionWeight = BlockExecutionWeight;
-    /// The base weight of any extrinsic processed by the runtime, independent of the
-    /// logic of that extrinsic. (Signature verification, nonce increment, fee, etc...)
-    type ExtrinsicBaseWeight = ExtrinsicBaseWeight;
-    /// The maximum weight that a single extrinsic of `Normal` dispatch class can have,
-    /// idependent of the logic of that extrinsics. (Roughly max block weight - average on
-    /// initialize cost).
-    type MaximumExtrinsicWeight = MaximumExtrinsicWeight;
-    /// Maximum size of all encoded transactions (in bytes) that are allowed in one block.
-    type MaximumBlockLength = MaximumBlockLength;
-    /// Portion of the block weight that is available to all normal transactions.
-    type AvailableBlockRatio = AvailableBlockRatio;
     /// Version of the runtime.
     type Version = Version;
     /// Converts a module to the index of the module in `construct_runtime!`.
@@ -198,14 +216,16 @@ impl frame_system::Trait for Runtime {
     /// What to do if an account is fully reaped from the system.
     type OnKilledAccount = ();
     /// Weight information for the extrinsics of this pallet.
-    type SystemWeightInfo = ();
+    type SystemWeightInfo = frame_system::weights::SubstrateWeight<Runtime>;
+    /// This is used as an identifier of the chain. 42 is the generic substrate prefix.
+    type SS58Prefix = SS58Prefix;
 }
 
-impl pallet_aura::Trait for Runtime {
+impl pallet_aura::Config for Runtime {
     type AuthorityId = AuraId;
 }
 
-impl pallet_grandpa::Trait for Runtime {
+impl pallet_grandpa::Config for Runtime {
     type Event = Event;
     type Call = Call;
 
@@ -228,7 +248,7 @@ parameter_types! {
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
 }
 
-impl pallet_timestamp::Trait for Runtime {
+impl pallet_timestamp::Config for Runtime {
     /// A timestamp: milliseconds since the unix epoch.
     type Moment = Moment;
     type OnTimestampSet = Aura;
@@ -241,7 +261,7 @@ parameter_types! {
 	pub const MaxLocks: u32 = 50;
 }
 
-impl pallet_balances::Trait for Runtime {
+impl pallet_balances::Config for Runtime {
     /// The type for recording an account's balance.
     type Balance = Balance;
     type DustRemoval = ();
@@ -257,25 +277,24 @@ parameter_types! {
 	pub const TransactionByteFee: Balance = 1 * MILLICENTS;
 }
 
-impl pallet_transaction_payment::Trait for Runtime {
-    type Currency = Balances;
-    type OnTransactionPayment = DealWithFees;
+impl pallet_transaction_payment::Config for Runtime {
+    type OnChargeTransaction = CurrencyAdapter<Balances, DealWithFees>;
     type TransactionByteFee = TransactionByteFee;
     type WeightToFee = IdentityFee<Balance>;
     type FeeMultiplierUpdate = ();
 }
 
-impl pallet_sudo::Trait for Runtime {
+impl pallet_sudo::Config for Runtime {
     type Event = Event;
     type Call = Call;
 }
 
 parameter_types! {
-	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) * MaximumBlockWeight::get();
+	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) * RuntimeBlockWeights::get().max_block;
 	pub const MaxScheduledPerBlock: u32 = 50;
 }
 
-impl pallet_scheduler::Trait for Runtime {
+impl pallet_scheduler::Config for Runtime {
     type Event = Event;
     type Origin = Origin;
     type PalletsOrigin = OriginCaller;
@@ -286,7 +305,7 @@ impl pallet_scheduler::Trait for Runtime {
     type WeightInfo = ();
 }
 
-impl pallet_utility::Trait for Runtime {
+impl pallet_utility::Config for Runtime {
     type Event = Event;
     type Call = Call;
     type WeightInfo = ();
@@ -300,7 +319,7 @@ parameter_types! {
   pub const MaxHandleLen: u32 = 50;
 }
 
-impl pallet_utils::Trait for Runtime {
+impl pallet_utils::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type MinHandleLen = MinHandleLen;
@@ -309,7 +328,7 @@ impl pallet_utils::Trait for Runtime {
 
 use pallet_permissions::default_permissions::DefaultSpacePermissions;
 
-impl pallet_permissions::Trait for Runtime {
+impl pallet_permissions::Config for Runtime {
 	type DefaultSpacePermissions = DefaultSpacePermissions;
 }
 
@@ -317,7 +336,7 @@ parameter_types! {
   pub const MaxCommentDepth: u32 = 10;
 }
 
-impl pallet_posts::Trait for Runtime {
+impl pallet_posts::Config for Runtime {
 	type Event = Event;
 	type MaxCommentDepth = MaxCommentDepth;
 	type PostScores = Scores;
@@ -327,11 +346,11 @@ impl pallet_posts::Trait for Runtime {
 
 parameter_types! {}
 
-impl pallet_post_history::Trait for Runtime {}
+impl pallet_post_history::Config for Runtime {}
 
 parameter_types! {}
 
-impl pallet_profile_follows::Trait for Runtime {
+impl pallet_profile_follows::Config for Runtime {
 	type Event = Event;
 	type BeforeAccountFollowed = Scores;
 	type BeforeAccountUnfollowed = Scores;
@@ -339,18 +358,18 @@ impl pallet_profile_follows::Trait for Runtime {
 
 parameter_types! {}
 
-impl pallet_profiles::Trait for Runtime {
+impl pallet_profiles::Config for Runtime {
 	type Event = Event;
 	type AfterProfileUpdated = ProfileHistory;
 }
 
 parameter_types! {}
 
-impl pallet_profile_history::Trait for Runtime {}
+impl pallet_profile_history::Config for Runtime {}
 
 parameter_types! {}
 
-impl pallet_reactions::Trait for Runtime {
+impl pallet_reactions::Config for Runtime {
 	type Event = Event;
 	type PostReactionScores = Scores;
 }
@@ -359,7 +378,7 @@ parameter_types! {
   pub const MaxUsersToProcessPerDeleteRole: u16 = 40;
 }
 
-impl pallet_roles::Trait for Runtime {
+impl pallet_roles::Config for Runtime {
 	type Event = Event;
 	type MaxUsersToProcessPerDeleteRole = MaxUsersToProcessPerDeleteRole;
 	type Spaces = Spaces;
@@ -382,7 +401,7 @@ parameter_types! {
   pub const DownvoteCommentActionWeight: i16 = -2;
 }
 
-impl pallet_scores::Trait for Runtime {
+impl pallet_scores::Config for Runtime {
 	type Event = Event;
 
 	type FollowSpaceActionWeight = FollowSpaceActionWeight;
@@ -400,7 +419,7 @@ impl pallet_scores::Trait for Runtime {
 
 parameter_types! {}
 
-impl pallet_space_follows::Trait for Runtime {
+impl pallet_space_follows::Config for Runtime {
 	type Event = Event;
 	type BeforeSpaceFollowed = Scores;
 	type BeforeSpaceUnfollowed = Scores;
@@ -408,7 +427,7 @@ impl pallet_space_follows::Trait for Runtime {
 
 parameter_types! {}
 
-impl pallet_space_ownership::Trait for Runtime {
+impl pallet_space_ownership::Config for Runtime {
 	type Event = Event;
 }
 
@@ -416,7 +435,7 @@ parameter_types! {
 	pub HandleDeposit: Balance = 50 * CENTS;
 }
 
-impl pallet_spaces::Trait for Runtime {
+impl pallet_spaces::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type Roles = Roles;
@@ -430,7 +449,7 @@ impl pallet_spaces::Trait for Runtime {
 
 parameter_types! {}
 
-impl pallet_space_history::Trait for Runtime {}
+impl pallet_space_history::Config for Runtime {}
 
 pub struct BaseFilter;
 impl Filter<Call> for BaseFilter {
@@ -464,7 +483,7 @@ impl Filter<Call> for SessionKeysProxyFilter {
 	}
 }
 
-impl pallet_session_keys::Trait for Runtime {
+impl pallet_session_keys::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 	type MaxSessionKeysPerAccount = MaxSessionKeysPerAccount;
@@ -472,7 +491,7 @@ impl pallet_session_keys::Trait for Runtime {
 	type BaseSessionKeyBond = BaseSessionKeyBond;
 }
 
-impl pallet_donations::Trait for Runtime {
+impl pallet_donations::Config for Runtime {
 	type Event = Event;
 }
 
@@ -480,7 +499,7 @@ parameter_types! {
 	pub const DefaultAutoblockThreshold: u16 = 20;
 }
 
-impl pallet_moderation::Trait for Runtime {
+impl pallet_moderation::Config for Runtime {
 	type Event = Event;
 	type DefaultAutoblockThreshold = DefaultAutoblockThreshold;
 }
@@ -493,7 +512,7 @@ parameter_types! {
 	pub const YearlyPeriodInBlocks: BlockNumber = DAYS * 365;
 }
 
-impl pallet_subscriptions::Trait for Runtime {
+impl pallet_subscriptions::Config for Runtime {
 	type Event = Event;
 	type Subscription = Call;
 	type Scheduler = Scheduler;
@@ -505,7 +524,7 @@ impl pallet_subscriptions::Trait for Runtime {
 }
 */
 
-impl pallet_faucets::Trait for Runtime {
+impl pallet_faucets::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 }
@@ -519,7 +538,7 @@ construct_runtime!(
 		System: frame_system::{Module, Call, Config, Storage, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
 		Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-		Aura: pallet_aura::{Module, Config<T>, Inherent},
+		Aura: pallet_aura::{Module, Config<T>},
 		Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
 		Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Module, Storage},
@@ -555,8 +574,7 @@ construct_runtime!(
 );
 
 /// The address format for describing accounts.
-mod multiaddress;
-pub type Address = multiaddress::MultiAddress<AccountId, ()>;
+pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
 /// Block header type as expected by this runtime.
 pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type as expected by this runtime.
@@ -712,6 +730,12 @@ impl_runtime_apis! {
 		) -> pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo<Balance> {
 			TransactionPayment::query_info(uxt, len)
 		}
+		fn query_fee_details(
+			uxt: <Block as BlockT>::Extrinsic,
+			len: u32,
+		) -> pallet_transaction_payment::FeeDetails<Balance> {
+			TransactionPayment::query_fee_details(uxt, len)
+		}
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
@@ -722,7 +746,7 @@ impl_runtime_apis! {
 			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 
 			use frame_system_benchmarking::Module as SystemBench;
-			impl frame_system_benchmarking::Trait for Runtime {}
+			impl frame_system_benchmarking::Config for Runtime {}
 
 			let whitelist: Vec<TrackedStorageKey> = vec![
 				// Block Number
