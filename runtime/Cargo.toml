@@ -54,6 +54,8 @@ pallet-spaces = { default-features = false, path = '../pallets/spaces' }
 #pallet-subscriptions = { default-features = false, path = '../pallets/subscriptions' }
 pallet-utils = { default-features = false, path = '../pallets/utils' }
 
+subsocial-primitives = { default-features = false, path = '../primitives' }
+
 # Substrate dependencies
 frame-benchmarking = { default-features = false, optional = true, version = '3.0.0' }
 frame-executive = { default-features = false, version = '3.0.0' }
@@ -127,6 +129,7 @@ std = [
     'sp-transaction-pool/std',
     'sp-version/std',
     'sp-io/std',
+    'subsocial-primitives/std',
 #    'pallet-donations/std',
     'pallet-faucets/std',
 #    'pallet-moderation/std',

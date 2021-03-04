@@ -10,12 +10,14 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use sp_std::prelude::*;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+pub use subsocial_primitives::{AccountId, Signature, Balance, Index};
+use subsocial_primitives::{BlockNumber, Hash, Moment};
 use sp_runtime::{
-    ApplyExtrinsicResult, generic, create_runtime_str, impl_opaque_keys, MultiSignature,
+    ApplyExtrinsicResult, generic, create_runtime_str, impl_opaque_keys,
     transaction_validity::{TransactionValidity, TransactionSource},
 };
 use sp_runtime::traits::{
-    BlakeTwo256, Block as BlockT, Verify, IdentifyAccount, NumberFor, AccountIdLookup
+    BlakeTwo256, Block as BlockT, NumberFor, AccountIdLookup
 };
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -49,35 +51,6 @@ use static_assertions::const_assert;
 pub mod constants;
 use constants::{currency::*, time::*};
 
-/// An index to a block.
-pub type BlockNumber = u32;
-
-/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-pub type Signature = MultiSignature;
-
-/// Some way of identifying an account on the chain. We intentionally make it equivalent
-/// to the public key of our transaction signing scheme.
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-
-/// The type for looking up accounts. We don't expect more than 4 billion of them, but you
-/// never know...
-pub type AccountIndex = u32;
-
-/// Balance of an account.
-pub type Balance = u128;
-
-/// Type used for expressing timestamp.
-pub type Moment = u64;
-
-/// Index of a transaction in the chain.
-pub type Index = u32;
-
-/// A hash of some data used by the chain.
-pub type Hash = sp_core::H256;
-
-/// Digest item type.
-pub type DigestItem = generic::DigestItem<Hash>;
-
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
@@ -107,7 +80,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     spec_name: create_runtime_str!("subsocial"),
     impl_name: create_runtime_str!("dappforce-subsocial"),
     authoring_version: 0,
-    spec_version: 8,
+    spec_version: 9,
     impl_version: 0,
     apis: RUNTIME_API_VERSIONS,
     transaction_version: 2,
